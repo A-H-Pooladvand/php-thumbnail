@@ -4,6 +4,13 @@ namespace Thumb\lib\Config;
 
 class Config
 {
+    /**
+     * Get the specified configuration value.
+     *
+     * @param string $file
+     *
+     * @return mixed
+     */
     public function handle(string $file)
     {
         $pieces = explode('.', $file);

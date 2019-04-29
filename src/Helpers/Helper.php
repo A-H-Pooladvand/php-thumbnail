@@ -1,9 +1,8 @@
 <?php
 
-use Thumb\Img;
+use Thumb\Thumb;
 use Thumb\lib\Config\Config;
 use Thumb\lib\Directory\Directory;
-use Thumb\Thumb;
 
 /**
  * Determines root directory (project directory).
@@ -48,7 +47,7 @@ if (! function_exists('config')) {
 }
 
 /**
- * Determines config directory folder.
+ * Helper function for making thumbnails easily.
  *
  * @param string $file
  */
