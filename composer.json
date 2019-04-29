@@ -1,0 +1,29 @@
+{
+  "name": "ahp/thumbnail",
+  "description": "Instant thumbnail maker for the images to use in views",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Amirhossein Pooladvand",
+      "email": "a.h.pooladvand@gmail.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.1",
+    "intervention/image": "^2.4@dev"
+  },
+  "require-dev": {
+    "filp/whoops": "^2.2@dev",
+    "larapack/dd": "1.*"
+  },
+  "autoload": {
+    "files": [
+      "src/Helpers/Helper.php"
+    ],
+    "psr-4": {
+      "Thumb\\": "src"
+    }
+  }
+}
