@@ -10,6 +10,5 @@
  |
  */
 return [
-    'images_directory' => 'files',
-    'thumbnails_directory' => 'thumbnails',
+    'destination_directory' => 'thumbnails',
 ];
