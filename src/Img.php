@@ -71,37 +71,32 @@ class Img
      * Resize|Crop|Fit an image and manipulate it's width
      * and height based on the given parameters
      *
-     * @param string      $path
-     * @param int|null    $width
-     * @param int|null    $height
-     * @param string|null $mode
+     * @param string $path
+     * @param int $width
+     * @param int $height
+     * @param string $mode
+     *
+     * @param int|null $quality
+     * @return string
      */
-    public function make(string $path, int $width = null, int $height = null, string $mode = null): void
+    public function make(string $path, int $width = null, int $height = null, string $mode = null, int $quality = null): string
     {
         $this->width = $width;
         $this->height = $height;
         $this->validateParameters();
-
         $path = $this->normalizePath($path);
+
+        if ($this->fileAlreadyExists($path, $mode)) {
+            return $this->imagePath($path, $mode);
+        }
+
         $this->setImage($path);
-
-        $mode = $mode ?? 'resize';
-
-        if ('resize' === $mode) {
-            $this->resize();
-        }
-
-        if ('crop' === $mode) {
-            $this->crop();
-        }
-
-        if ('fit' === $mode) {
-            $this->fit();
-        }
-
+        $this->manipulate($mode);
         $this->makeDestinationDirectory($path);
-        $this->image->save($this->getDestination().$this->getFileName($path));
+        $this->image->save($this->getDestination().$this->getFileName($path, $mode), $quality ?? 100);
         $this->image->destroy();
+
+        return $this->imagePath($path, $mode);
     }
 
     /**
@@ -250,11 +245,12 @@ class Img
      *
      * @param string $path
      *
+     * @param string $mode
      * @return mixed
      */
-    private function getFileName(string $path)
+    private function getFileName(string $path, string $mode)
     {
-        return substr_replace($path, "_{$this->width}x{$this->height}", strrpos($path, '.'), 0);
+        return substr_replace($path, "_{$this->width}x{$this->height}_{$mode}", strrpos($path, '.'), 0);
     }
 
     /**
@@ -314,5 +310,48 @@ class Img
         });
 
         return $this;
+    }
+
+    /**
+     * Determines image path to echo in views....
+     *
+     * @param string $path
+     * @param string $mode
+     * @return string
+     */
+    private function imagePath(string $path, string $mode): string
+    {
+        return config('setting.thumbnails_directory').$this->getFileName($path, $mode);
+    }
+
+    /**
+     * Validates whether file already exists in destination folder.
+     *
+     * @param string $path
+     * @param string $mode
+     * @return bool
+     */
+    private function fileAlreadyExists(string $path, string $mode): bool
+    {
+        return file_exists($this->getDestination().$this->getFileName($path, $mode));
+    }
+
+    /**
+     * Manipulates given image based on the given mode.
+     *
+     * @param string|null $mode
+     * @return \Thumb\Img
+     */
+    private function manipulate(string $mode = null): self
+    {
+        if ('fit' === $mode) {
+            return $this->fit();
+        }
+
+        if ('crop' === $mode) {
+            return $this->crop();
+        }
+
+        return $this->resize();
     }
 }

@@ -16,6 +16,8 @@ if (! function_exists('base_dir')) {
 
 /**
  * Determines public directory folder.
+ *
+ * @param string $path
  */
 if (! function_exists('public_dir')) {
     function public_dir(string $path = null)
@@ -38,6 +40,8 @@ if (! function_exists('config_dir')) {
  * Determines config directory folder.
  *
  * @param string $file
+ *
+ * @return string
  */
 if (! function_exists('config')) {
     function config(string $file)
@@ -49,11 +53,35 @@ if (! function_exists('config')) {
 /**
  * Helper function for making thumbnails easily.
  *
- * @param string $file
+ * @param string $path
+ * @param int $width
+ * @param int $height
+ * @param string $mode
+ * @param int $quality
+ *
+ * @return string
  */
 if (! function_exists('thumb')) {
-    function thumb(string $path, int $width = null, int $height = null, string $mode = null)
+    function thumb(string $path, int $width = null, int $height = null, string $mode = null, int $quality = null)
     {
-        Thumb::make($path, $width, $height, $mode);
+        return Thumb::make($path, $width, $height, $mode, $quality);
+    }
+}
+
+/**
+ * Helper function for making thumbnails easily.
+ *
+ * @param string $path
+ * @param int $width
+ * @param int $height
+ * @param string $mode
+ * @param int $quality
+ *
+ * @return string
+ */
+if (! function_exists('img')) {
+    function img(string $path, int $width = null, int $height = null, string $mode = null, int $quality = null)
+    {
+        return Thumb::make($path, $width, $height, $mode, $quality);
     }
 }
