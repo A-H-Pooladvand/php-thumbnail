@@ -106,7 +106,7 @@ class Img
      */
     private function setRepository(): self
     {
-        $this->repository = public_dir(
+        $this->repository = base_dir(
             config('setting.images_directory')
         );
 
@@ -150,9 +150,9 @@ class Img
      */
     private function setDestination(): self
     {
-        $this->destination = public_dir(
-            config('setting.thumbnails_directory')
-        );
+        $this->destination = base_dir(
+                config('setting.thumbnails_directory')
+            );
 
         return $this;
     }

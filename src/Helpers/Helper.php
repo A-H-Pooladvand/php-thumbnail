@@ -8,21 +8,9 @@ use Thumb\lib\Directory\Directory;
  * Determines root directory (project directory).
  */
 if (! function_exists('base_dir')) {
-    function base_dir()
+    function base_dir(string $path = null)
     {
-        return (new Directory)->base();
-    }
-}
-
-/**
- * Determines public directory folder.
- *
- * @param string $path
- */
-if (! function_exists('public_dir')) {
-    function public_dir(string $path = null)
-    {
-        return (new Directory)->public($path);
+        return (new Directory)->base($path);
     }
 }
 

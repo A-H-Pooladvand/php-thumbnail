@@ -13,23 +13,12 @@ class Directory
     /**
      * Determines base director (root of the project).
      *
+     * @param string|null $path
      * @return string
      */
-    public function base(): string
+    public function base(string $path = null): string
     {
-        return $_SERVER['DOCUMENT_ROOT'];
-    }
-
-    /**
-     * Determines public directory
-     *
-     * @param string $path
-     *
-     * @return string
-     */
-    public function public(string $path = null): string
-    {
-        return $this->base().'/public'.($path ? '/'.$path : $path);
+        return $_SERVER['DOCUMENT_ROOT'].($path ? '/'.$path : $path);
     }
 
     /**
