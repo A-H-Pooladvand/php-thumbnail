@@ -271,9 +271,7 @@ final class Img
      */
     private function crop(): self
     {
-        if (null === $this->width && null === $this->height) {
-            throw new RuntimeException('Width or height needs to be defined.');
-        }
+        $this->oneShouldDefine();
 
         $this->setMissingParams();
 
@@ -333,6 +331,8 @@ final class Img
      */
     private function setMissingParams(): self
     {
+        $this->oneShouldDefine();
+
         if (null === $this->width) {
             $this->setAutoWidth();
         }
@@ -415,6 +415,8 @@ final class Img
      */
     private function manipulate(): self
     {
+
+
         $mode = $this->getMode();
         if (! method_exists($this, $mode)) {
             throw new RuntimeException("{$mode} option does not exists. please provide a valid option");
@@ -476,5 +478,18 @@ final class Img
     private function getQuality(): int
     {
         return $this->quality;
+    }
+
+    /**
+     * Throws exception if width and height are empty
+     *
+     * @return void
+     * @throws \RuntimeException
+     */
+    private function oneShouldDefine(): void
+    {
+        if (null === $this->width && null === $this->height) {
+            throw new RuntimeException('Width or height needs to be defined.');
+        }
     }
 }
