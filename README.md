@@ -25,11 +25,13 @@ PHP Thumbnail is a **PHP image manipulation** library providing an easier and ex
 `composer require ahp/thumbnail`  
 
 Once installed you can use it  
-`// Via helper function`
+`// Via helper function`  
 `img($path, $width, $height, $mode, $quality)`  
 OR  
-`// Via class`
-`\Thumb\Thumb::make($path, $width, $height, $mode, $quality)`
+`// Via class`  
+`\Thumb\Thumb::make($path, $width, $height, $mode, $quality)`  
+
+afterward thumbnail will be create in same directory of given path named thumbnail
 
 
 ## Parameters
