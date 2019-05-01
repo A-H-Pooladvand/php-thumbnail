@@ -8,7 +8,7 @@ use Intervention\Image\Image;
 use Intervention\Image\Constraint;
 use Intervention\Image\ImageManager;
 
-class Img
+final class Img
 {
     /**
      * ImageManager instance.
@@ -55,6 +55,27 @@ class Img
     private $image;
 
     /**
+     * Determines Quality of image.
+     *
+     * @var int $quality
+     */
+    private $quality;
+
+    /**
+     * Mode of image for manipulation.
+     *
+     * @var string $mode
+     */
+    private $mode;
+
+    /**
+     * Image path.
+     *
+     * @var string $path
+     */
+    private $path;
+
+    /**
      * Img constructor.
      *
      * @param \Intervention\Image\ImageManager $imageManager
@@ -75,28 +96,31 @@ class Img
      * @param int $width
      * @param int $height
      * @param string $mode
-     *
      * @param int|null $quality
+     *
      * @return string
      */
     public function make(string $path, int $width = null, int $height = null, string $mode = null, int $quality = null): string
     {
-        $this->width = $width;
-        $this->height = $height;
-        $this->validateParameters();
-        $path = $this->normalizePath($path);
+        $this->setPath($path);
+        $this->setMode($mode);
+        $this->setQuality($quality);
+        $this->setWidth($width);
+        $this->setHeight($height);
 
-        if ($this->fileAlreadyExists($path, $mode)) {
-            return $this->imagePath($path, $mode);
+        $this->validateParameters();
+
+        if ($this->fileAlreadyExists()) {
+            return $this->imagePath();
         }
 
-        $this->setImage($path);
-        $this->manipulate($mode);
-        $this->makeDestinationDirectory($path);
-        $this->image->save($this->getDestination().$this->getFileName($path, $mode), $quality ?? 100);
-        $this->image->destroy();
+        $this->setImage();
+        $this->manipulate();
+        $this->makeDestinationDirectory();
+        $this->getImage()->save($this->getDestination().$this->getFileName(true), $quality);
+        $this->getImage()->destroy();
 
-        return $this->imagePath($path, $mode);
+        return $this->imagePath();
     }
 
     /**
@@ -112,45 +136,13 @@ class Img
     }
 
     /**
-     * Get repository property.
-     *
-     * @return string
-     */
-    private function getRepository(): string
-    {
-        return $this->repository;
-    }
-
-    /**
-     * Normalizes given path, if path has / at the beginning
-     * we do nothing otherwise we add a slash
-     * to the begin of the path
-     *
-     * @param string $path
-     *
-     * @return string
-     */
-    private function normalizePath(string $path): string
-    {
-        $firstChar = $path[0];
-
-        if ($firstChar === '/') {
-            return $path;
-        }
-
-        return '/'.$path;
-    }
-
-    /**
      * Set destination folder.
      *
      * @return \Thumb\Img
      */
     private function setDestination(): self
     {
-        $this->destination = base_dir(
-                config('setting.destination_directory')
-            );
+        $this->destination = base_dir().'/thumbnails';
 
         return $this;
     }
@@ -166,29 +158,107 @@ class Img
     }
 
     /**
+     * Get repository property.
+     *
+     * @return string
+     */
+    private function getRepository(): string
+    {
+        return $this->repository;
+    }
+
+    /**
      * Find image and set it.
+     *
+     * @return void
+     */
+    private function setImage(): void
+    {
+        $this->image = $this->imageManager->make($this->getRepository().$this->getPath());
+    }
+
+    /**
+     * Get image intervention image instance.
+     *
+     * @return \Intervention\Image\Image
+     */
+    private function getImage(): Image
+    {
+        return $this->image;
+    }
+
+    /**
+     * Normalizes given path, if path has / at the beginning
+     * we do nothing otherwise we add a slash
+     * to the begin of the path
      *
      * @param string $path
      *
-     * @return \Thumb\Img
+     * @return void
      */
-    private function setImage(string $path): self
+    private function setPath(string $path): void
     {
-        $this->image = $this->imageManager->make($this->getRepository().$path);
+        $firstChar = $path[0];
 
-        return $this;
+        if (DIRECTORY_SEPARATOR === $firstChar) {
+            $this->path = $path;
+
+            return;
+        }
+
+        $this->path = DIRECTORY_SEPARATOR.$path;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getHeight(): ?int
+    {
+        return $this->height;
+    }
+
+    /**
+     * @param int|null $height
+     */
+    public function setHeight(?int $height): void
+    {
+        $this->height = $height;
+    }
+
+    /**
+     * Get image path.
+     *
+     * @return string
+     */
+    private function getPath(): string
+    {
+        return $this->path;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getWidth(): ?int
+    {
+        return $this->width;
+    }
+
+    /**
+     * @param int|null $width
+     */
+    public function setWidth(?int $width): void
+    {
+        $this->width = $width;
     }
 
     /**
      * Creates storage folder if not exists.
      *
-     * @param string $path
-     *
      * @return \Thumb\Img
      */
-    private function makeDestinationDirectory(string $path): self
+    private function makeDestinationDirectory(): self
     {
-        @mkdir($this->getDestination().Str::withoutFileName($path), 0755, true);
+        @mkdir($this->getDestination().Str::withoutFileName($this->filePath()), 0755, true);
 
         return $this;
     }
@@ -207,7 +277,7 @@ class Img
 
         $this->setMissingParams();
 
-        $this->image->crop($this->width, $this->height);
+        $this->getImage()->crop($this->width, $this->height);
 
         return $this;
     }
@@ -241,14 +311,18 @@ class Img
     /**
      * Determining file name and adding width and height to file name.
      *
-     * @param string $path
-     *
-     * @param string $mode
-     * @return mixed
+     * @param bool $isSave
+     * @return string
      */
-    private function getFileName(string $path, string $mode)
+    private function getFileName(bool $isSave = null): string
     {
-        return substr_replace($path, "_{$this->width}x{$this->height}_{$mode}", strrpos($path, '.'), 0);
+        $isSave = $isSave ?? false;
+
+        $path = $isSave ? $this->filePath() : $this->getPath();
+
+        $path = substr($path, strpos($path, DIRECTORY_SEPARATOR));
+
+        return substr_replace($path, "_{$this->getWidth()}x{$this->getHeight()}_{$this->getMode()}_{$this->getQuality()}", strrpos($path, '.'), 0);
     }
 
     /**
@@ -288,7 +362,7 @@ class Img
      */
     private function resize(): self
     {
-        $this->image->resize($this->width, $this->height, static function (Constraint $constraint) {
+        $this->getImage()->resize($this->width, $this->height, static function (Constraint $constraint) {
             $constraint->aspectRatio();
             $constraint->upsize();
         });
@@ -303,7 +377,7 @@ class Img
      */
     private function fit(): self
     {
-        $this->image->fit($this->width, $this->height, static function (Constraint $constraint) {
+        $this->getImage()->fit($this->width, $this->height, static function (Constraint $constraint) {
             $constraint->upsize();
         });
 
@@ -313,43 +387,94 @@ class Img
     /**
      * Determines image path to echo in views....
      *
-     * @param string $path
-     * @param string $mode
      * @return string
      */
-    private function imagePath(string $path, string $mode): string
+    private function imagePath(): string
     {
-        return config('setting.destination_directory').$this->getFileName($path, $mode);
+        return 'thumbnails'.$this->getFileName(true);
     }
 
     /**
      * Validates whether file already exists in destination folder.
      *
-     * @param string $path
-     * @param string $mode
      * @return bool
      */
-    private function fileAlreadyExists(string $path, string $mode): bool
+    private function fileAlreadyExists(): bool
     {
-        return file_exists($this->getDestination().$this->getFileName($path, $mode));
+        if ('resize' === $this->getMode()) {
+            $this->setMissingParams();
+        }
+
+        return file_exists($this->getDestination().$this->getFileName(true));
     }
 
     /**
      * Manipulates given image based on the given mode.
      *
-     * @param string|null $mode
      * @return \Thumb\Img
      */
-    private function manipulate(string $mode = null): self
+    private function manipulate(): self
     {
-        if ('fit' === $mode) {
-            return $this->fit();
+        $mode = $this->getMode();
+        if (! method_exists($this, $mode)) {
+            throw new RuntimeException("{$mode} option does not exists. please provide a valid option");
         }
 
-        if ('crop' === $mode) {
-            return $this->crop();
+        $this->$mode();
+
+        return $this;
+    }
+
+    /**
+     * Get file path.
+     *
+     * @return string
+     */
+    public function filePath(): string
+    {
+        $path = $this->getPath();
+        $firstCharacter = $path[0];
+
+        if (DIRECTORY_SEPARATOR === $firstCharacter) {
+            $path = trim($path, DIRECTORY_SEPARATOR);
         }
 
-        return $this->resize();
+        return substr($path, strpos($path, DIRECTORY_SEPARATOR));
+    }
+
+    /**
+     * @param string|null $mode
+     *
+     * @return void
+     */
+    private function setMode(string $mode = null): void
+    {
+        $this->mode = $mode ?? 'resize';
+    }
+
+    /**
+     * @return string
+     */
+    private function getMode(): string
+    {
+        return $this->mode;
+    }
+
+    /**
+     * @param int $quality
+     *
+     * @return void
+     */
+    private function setQuality(int $quality = null): void
+    {
+        $this->quality = $quality ?? 100;
+    }
+
+    /**
+     * @return int
+     */
+    private function getQuality(): int
+    {
+        return $this->quality;
     }
 }

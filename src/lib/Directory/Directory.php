@@ -20,14 +20,4 @@ class Directory
     {
         return $_SERVER['DOCUMENT_ROOT'].($path ? '/'.$path : $path);
     }
-
-    /**
-     * Determines config directory
-     *
-     * @return string
-     */
-    public function config(): string
-    {
-        return $this->base().'/config';
-    }
 }
